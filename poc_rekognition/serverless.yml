@@ -1,0 +1,58 @@
+service:
+  name: poc-rekognition
+
+plugins:
+  - serverless-bundle
+  - serverless-pseudo-parameters
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 256
+  stage: ${opt:stage, 'dev'}
+  region: eu-west-1
+  environment:
+    S3_BUCKET: ${self:custom.s3.bucket}
+    MONGO_URI: mongodb+srv://mongo-dev:jkydA54Dg4YN3zQh@y2-dev.li8dv.mongodb.net/yad2?retryWrites=true&w=majority
+    RABBITMQ_PROTOCOL: amqps
+    RABBITMQ_PASSWORD: BHPXNDMGCGNDLCQC
+    RABBITMQ_PORT: 15510
+    RABBITMQ_VHOST: rabbitmq-dev
+    RABBITMQ_HOSTNAME: portal563-6.rabbitmq-dev.2290265637.composedb.com
+    RABBITMQ_USERNAME: rabbit
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - "rekognition:*"
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - "ec2:*"
+      Resource: "*"
+
+functions:
+  s3listen:
+    handler: src/handlers/event.handler
+    timeout: 20
+    events:
+      - s3:
+          bucket: ${self:custom.s3.bucket}
+          event: s3:ObjectCreated:*
+          existing: true
+    vpc:
+      securityGroupIds:
+        - sg-0ec1cd65f855d1169
+      subnetIds:
+        - subnet-0baaba52252c94630
+        - subnet-048dd1511a8827cd3
+        - subnet-04c5a72073faf3848
+
+custom:
+  s3: 
+    bucket: y2-address-master-dev
+  bundle:
+    linting: false
